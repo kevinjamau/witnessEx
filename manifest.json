@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Witness Report Search",
+  "version": "1.0.0",
+  "description": "Select a name and check it in Witness Report",
+  "permissions": ["contextMenus", "activeTab", "scripting", "storage"],
+  "host_permissions": ["https://witness.report/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
