@@ -189,22 +189,41 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
       parsed.matches.forEach((match, index) => {
         const fullName = escapeHtml(match.fullName);
-        const deleted = escapeHtml(match.deleted);
+        const isDeleted = escapeHtml(match.isDeleted);
         const updated = escapeHtml(match.updated);
         const link = String(match.link ?? "").trim();
+        const thumbnail = String(match.thumbnail ?? "").trim();
 
         html += `
-          <div style="margin:10px 0;">
-            <div style="font-weight:700;">${index + 1}. ${fullName}</div>
-            <div>Deleted: ${deleted}</div>
-            <div>Updated: ${updated}</div>
+          <div style="margin:10px 0; display:flex; gap:12px;">
+        `;
+
+        if (thumbnail) {
+          html += `
+            <div style="flex-shrink:0;">
+              <img src="${escapeHtml(thumbnail)}" alt="Photo" style="width:80px; height:80px; object-fit:cover; border-radius:4px; border:1px solid #ddd;" />
+            </div>
+          `;
+        }
+
+        html += `
+            <div style="flex:1;">
+              <div style="font-weight:700;">${index + 1}. ${fullName}</div>
+              <div style="color:${isDeleted === '1' ? 'red' : 'green'}; font-weight:600;">
+          ${isDeleted === '1' ? 'Deleted' : 'Active'}
+              </div>
+              <div>Updated: ${updated}</div>
         `;
 
         if (link) {
           html += `<div><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">link</a></div>`;
         }
 
-        html += `</div><hr />`;
+        html += `
+            </div>
+          </div>
+          <hr />
+        `;
       });
     } else {
       html += `
