@@ -3,7 +3,7 @@
   "name": "Witness Report Search",
   "version": "1.0.0",
   "description": "Select a name and check it in Witness Report",
-  "permissions": ["contextMenus", "activeTab", "scripting", "storage"],
+  "permissions": ["contextMenus", "activeTab", "scripting", "storage","windows"],
   "host_permissions": ["https://witness.report/*"],
   "background": {
     "service_worker": "background.js"

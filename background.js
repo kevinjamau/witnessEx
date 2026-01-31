@@ -1,7 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "check-name",
-    title: "Check name in DB",
+    title: "Find in Witness Report",
     contexts: ["selection"],
   });
 });
@@ -23,7 +23,9 @@ function normalizePersian(text) {
     .replace(/ك/g, "ک")
     .replace(/ة/g, "ه")
     .replace(/ؤ/g, "و")
-    .replace(/إ|أ|ٱ/g, "ا");
+    .replace(/إ|أ|ٱ/g, "ا")
+    .replace(/،/g, "")
+    .replace(/,/g, "");
 
   // Remove diacritics and tatweel
   s = s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, "");
@@ -97,6 +99,11 @@ async function showPopup(tabId, pageHtml) {
       w.document.open();
       w.document.write(html);
       w.document.close();
+
+      // Auto-close after 2 minutes (120000 milliseconds)
+      setTimeout(() => {
+        w.close();
+      }, 120000);
     },
     args: [pageHtml],
   });
@@ -191,8 +198,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         const fullName = escapeHtml(match.fullName);
         const isDeleted = escapeHtml(match.isDeleted);
         const updated = escapeHtml(match.updated);
+        const city = escapeHtml(match.city ?? "");
         const link = String(match.link ?? "").trim();
         const thumbnail = String(match.thumbnail ?? "").trim();
+        const detentionStatus = escapeHtml(match.detentionStatus ?? "");
+        const age = escapeHtml(match.age ?? "");
 
         html += `
           <div style="margin:10px 0; display:flex; gap:12px;">
@@ -210,13 +220,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             <div style="flex:1;">
               <div style="font-weight:700;">${index + 1}. ${fullName}</div>
               <div style="color:${isDeleted === '1' ? 'red' : 'green'}; font-weight:600;">
-          ${isDeleted === '1' ? 'Deleted' : 'Active'}
+          ${isDeleted === '1' ? 'Deleted' : 'Active'} ${detentionStatus ? `[${detentionStatus}]` : ''}
               </div>
               <div>Updated: ${updated}</div>
+              ${city ? `<div>City: ${city}</div>` : ''}
+              ${age ? `<div>Age: ${age}</div>` : ''}
+              
         `;
-
         if (link) {
-          html += `<div><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">link</a></div>`;
+          const linkForCopy = link.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
+          html += `<div>
+            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">link</a>
+          </div>`;
         }
 
         html += `
@@ -226,13 +241,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         `;
       });
     } else {
+      const nameForCopy = name.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
       html += `
         <div style="font-size:16px; font-weight:700;">❌ NOT FOUND</div>
         <div style="margin-top:6px;">Name: <b>${escapeHtml(name)}</b></div>
+        
       `;
     }
 
     html += `
+
         </body>
       </html>
     `;
