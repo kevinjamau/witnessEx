@@ -224,7 +224,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
               </div>
               <div>Updated: ${updated}</div>
               ${city ? `<div>City: ${city}</div>` : ''}
-              ${age ? `<div>Age: ${age}</div>` : ''}
+              ${age && age !== '0' ? `<div>Age: ${age}</div>` : ''}
               
         `;
         if (link) {
@@ -242,10 +242,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       });
     } else {
       const nameForCopy = name.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
+      const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(name)}`;
       html += `
         <div style="font-size:16px; font-weight:700;">❌ NOT FOUND</div>
         <div style="margin-top:6px;">Name: <b>${escapeHtml(name)}</b></div>
-        
+        <div style="margin-top:12px;">
+          <a href="${escapeHtml(googleSearchUrl)}" target="_blank" rel="noopener noreferrer" style="padding:8px 16px; border:1px solid #4285f4; border-radius:4px; background:#4285f4; color:white; text-decoration:none; display:inline-block; font-size:14px;">🔍 Search on Google</a>
+        </div>
       `;
     }
 
