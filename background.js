@@ -157,8 +157,43 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const err = String(parsed.error);
       if (err.toLowerCase().includes("invalid api key")) {
         await setApiKeyToStorage("");
+        await showAlert(tabId, "Invalid API key. Please enter a new one.");
+        
+        // Prompt for new API key
+        const newApiKey = await promptForApiKey(tabId);
+        if (!newApiKey) {
+          await showAlert(tabId, "API key is required.");
+          return;
+        }
+        await setApiKeyToStorage(newApiKey);
+        
+        // Retry the request with new API key
+        const retryForm = new FormData();
+        retryForm.append("name", name);
+        retryForm.append("apikey", newApiKey);
+        
+        const retryRes = await fetch("https://witness.report/api/api.php", {
+          method: "POST",
+          body: retryForm,
+        });
+        
+        const retryRaw = await retryRes.text();
+        try {
+          parsed = JSON.parse(retryRaw);
+        } catch {
+          throw new Error(`Response not JSON. HTTP ${retryRes.status}\n${retryRaw.slice(0, 500)}`);
+        }
+        
+        if (!retryRes.ok) {
+          throw new Error(`HTTP ${retryRes.status}\n${retryRaw.slice(0, 500)}`);
+        }
+        
+        if (parsed && parsed.error) {
+          throw new Error(`Server error: ${String(parsed.error)}`);
+        }
+      } else {
+        throw new Error(`Server error: ${err}`);
       }
-      throw new Error(`Server error: ${err}`);
     }
 
     const existVal = parsed.exist ?? parsed.exists;
