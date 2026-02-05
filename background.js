@@ -148,11 +148,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       throw new Error(`Response not JSON. HTTP ${res.status}\n${raw.slice(0, 500)}`);
     }
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}\n${raw.slice(0, 500)}`);
-    }
-
-    // If server says invalid key, clear stored key so next run asks again
+    // Check for invalid API key BEFORE checking res.ok
     if (parsed && parsed.error) {
       const err = String(parsed.error);
       if (err.toLowerCase().includes("invalid api key")) {
@@ -184,7 +180,13 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           throw new Error(`Response not JSON. HTTP ${retryRes.status}\n${retryRaw.slice(0, 500)}`);
         }
         
-        if (!retryRes.ok) {
+        // Check for invalid key again in retry response
+        if (parsed && parsed.error && String(parsed.error).toLowerCase().includes("invalid api key")) {
+          await setApiKeyToStorage("");
+          throw new Error(`Server error: Invalid API key`);
+        }
+        
+        if (!retryRes.ok && (!parsed || !parsed.error)) {
           throw new Error(`HTTP ${retryRes.status}\n${retryRaw.slice(0, 500)}`);
         }
         
@@ -194,6 +196,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       } else {
         throw new Error(`Server error: ${err}`);
       }
+    }
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}\n${raw.slice(0, 500)}`);
     }
 
     const existVal = parsed.exist ?? parsed.exists;
